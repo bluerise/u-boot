@@ -88,6 +88,18 @@ config PCI_PHYTIUM
 	  Say Y here if you want to enable PCIe controller support on
 	  Phytium SoCs.
 
+config PCIE_DW_IMX
+	bool "Enable NXP i.MX8M PCIe driver (DesignWare core)"
+	depends on DM_PCI
+	depends on ARCH_IMX8M
+	select SYSCON
+	select REGMAP
+	select IMX8M_POWER_DOMAIN
+	help
+	  Say Y here if you want to enable PCIe controller support on
+	  i.MX8M SoCs. The PCIe controller on i.MX8M is based on
+	  DesignWare hardware.
+
 config PCIE_DW_MVEBU
 	bool "Enable Armada-8K PCIe driver (DesignWare core)"
 	depends on DM_PCI

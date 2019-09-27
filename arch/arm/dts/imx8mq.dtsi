@@ -1189,6 +1189,9 @@
 			         <&src IMX8MQ_RESET_PCIE_CTRL_APPS_EN>,
 			         <&src IMX8MQ_RESET_PCIE_CTRL_APPS_TURNOFF>;
 			reset-names = "pciephy", "apps", "turnoff";
+			anatop = <&anatop>;
+			gpr = <&iomuxc_gpr>;
+			ctrl-id = <0>;
 			status = "disabled";
 		};
 
@@ -1218,6 +1221,9 @@
 			         <&src IMX8MQ_RESET_PCIE2_CTRL_APPS_EN>,
 			         <&src IMX8MQ_RESET_PCIE2_CTRL_APPS_TURNOFF>;
 			reset-names = "pciephy", "apps", "turnoff";
+			anatop = <&anatop>;
+			gpr = <&iomuxc_gpr>;
+			ctrl-id = <1>;
 			status = "disabled";
 		};
 

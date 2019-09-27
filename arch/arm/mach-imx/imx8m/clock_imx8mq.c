@@ -502,6 +502,41 @@ void init_clk_usdhc(u32 index)
 	}
 }
 
+void init_clk_pcie(u32 index)
+{
+	switch (index) {
+	case 0:
+		clock_enable(CCGR_PCIE, 0);
+		clock_set_target_val(PCIE1_CTRL_CLK_ROOT, CLK_ROOT_ON |
+				     CLK_ROOT_SOURCE_SEL(1) |
+				     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1));
+		clock_set_target_val(PCIE1_AUX_CLK_ROOT, CLK_ROOT_ON |
+				     CLK_ROOT_SOURCE_SEL(1) |
+				     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1));
+		clock_set_target_val(PCIE1_PHY_CLK_ROOT, CLK_ROOT_ON |
+				     CLK_ROOT_SOURCE_SEL(1) |
+				     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1));
+		clock_enable(CCGR_PCIE, 1);
+		return;
+	case 1:
+		clock_enable(CCGR_PCIE2, 0);
+		clock_set_target_val(PCIE2_CTRL_CLK_ROOT, CLK_ROOT_ON |
+				     CLK_ROOT_SOURCE_SEL(1) |
+				     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1));
+		clock_set_target_val(PCIE2_AUX_CLK_ROOT, CLK_ROOT_ON |
+				     CLK_ROOT_SOURCE_SEL(1) |
+				     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1));
+		clock_set_target_val(PCIE2_PHY_CLK_ROOT, CLK_ROOT_ON |
+				     CLK_ROOT_SOURCE_SEL(1) |
+				     CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV1));
+		clock_enable(CCGR_PCIE2, 1);
+		return;
+	default:
+		printf("Invalid pci index\n");
+		return;
+	}
+}
+
 int set_clk_qspi(void)
 {
 	/*
