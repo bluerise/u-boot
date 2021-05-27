@@ -118,14 +118,6 @@
 	u-boot,dm-spl;
 };
 
-&pinctrl_usb3_0 {
-	u-boot,dm-spl;
-};
-
-&pinctrl_usb3_1 {
-	u-boot,dm-spl;
-};
-
 &pinctrl_usdhc1 {
 	u-boot,dm-spl;
 };

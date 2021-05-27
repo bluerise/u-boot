@@ -26,6 +26,7 @@
 #include <dwc3-uboot.h>
 #include <linux/usb/dwc3.h>
 #endif
+#include <linux/delay.h>
 
 #include "bd_common.h"
 
@@ -236,6 +237,9 @@ int board_usb_init(int index, enum usb_init_type init)
 		if (gp) {
 			gpio_request(gp, "usb1_rst");
 			gpio_direction_output(gp, 1);
+			gpio_set_value(gp, 0);
+			mdelay(10);
+			gpio_set_value(gp, 1);
 		}
 	}
 

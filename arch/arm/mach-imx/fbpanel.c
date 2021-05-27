@@ -126,11 +126,7 @@ static const char *const fbnames[] = {
 [FB_LVDS] = "fb_lvds",
 [FB_LVDS2] = "fb_lvds2",
 [FB_MIPI] = "fb_mipi",
-#if defined(CONFIG_IMX8MQ)
-[FB_MIPI_BRIDGE] = "mipi_dsi_bridge",
-#else
 [FB_MIPI_BRIDGE] = "mipi_dsi",
-#endif
 };
 
 static const char *const fbnames_name[] = {
