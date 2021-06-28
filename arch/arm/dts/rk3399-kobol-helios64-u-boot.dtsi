@@ -1,0 +1,266 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright (c) 2020 Aditya Prayoga (aditya@kobol.io)
+ */
+
+#include "rk3399-u-boot.dtsi"
+#include "rk3399-sdram-lpddr4-100.dtsi"
+
+/ {
+	aliases {
+		spi0 = &spi1;
+		ethernet0 = &gmac;
+	};
+
+	chosen {
+		bootargs = "earlycon=uart8250,mmio32,0xff1a0000 earlyprintk";
+		stdout-path = "serial2:1500000n8";
+		u-boot,spl-boot-order = "same-as-spl", &spiflash, &sdmmc, &sdhci;
+	};
+
+	config {
+		u-boot,spl-payload-offset = <0x80000>; /* @ 512KB */
+	};
+
+	leds {
+		led-1 {
+			linux,default-trigger = "panic";
+		};
+	};
+
+	vcc3v0_sd: vcc3v0-sd {
+		startup-delay-us = <20000>;
+	};
+};
+
+&cpu_alert0 {
+	temperature = <80000>;
+};
+
+&cpu_alert1 {
+	temperature = <95000>;
+};
+
+&cpu_crit {
+	temperature = <100000>;
+};
+
+&i2c0 {
+	rk808: pmic@1b {
+		rockchip,system-power-controller;
+
+		regulators {
+			vdd_center: DCDC_REG1 {
+				regulator-name = "vdd_center";
+				regulator-always-on;
+				regulator-boot-on;
+				regulator-min-microvolt = <950000>;
+				regulator-max-microvolt = <950000>;
+				regulator-init-microvolt = <950000>;
+				regulator-ramp-delay = <6001>;
+				regulator-state-mem {
+					regulator-on-in-suspend;
+					regulator-suspend-microvolt = <950000>;
+				};
+			};
+
+			vcc_ddr_s3: DCDC_REG3 {
+				regulator-name = "vcc_ddr_s3";
+				regulator-always-on;
+				regulator-boot-on;
+				regulator-state-mem {
+					regulator-on-in-suspend;
+				};
+			};
+
+			/* not used */
+			vcc1v8_dvp: LDO_REG1 {
+				regulator-name = "vcc1v8_dvp";
+			};
+
+			/* not used */
+			vcc3v0_touch: LDO_REG2 {
+				regulator-name = "vcc3v0_touch";
+			};
+
+			vcc1v8_s3: LDO_REG3 {
+				regulator-name = "vcc1v8_s3";
+				regulator-always-on;
+				regulator-boot-on;
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+				regulator-state-mem {
+					regulator-on-in-suspend;
+					regulator-suspend-microvolt = <1800000>;
+				};
+			};
+
+			/* not used */
+			vcca3v0_codec: LDO_REG5 {
+				regulator-name = "vcca3v0_codec";
+			};
+
+			vcc1v5_s3: LDO_REG6 {
+				regulator-name = "vcc1v5_s3";
+				regulator-always-on;
+				regulator-boot-on;
+				regulator-min-microvolt = <1500000>;
+				regulator-max-microvolt = <1500000>;
+				regulator-state-mem {
+					regulator-on-in-suspend;
+					regulator-suspend-microvolt = <1500000>;
+				};
+			};
+
+			/* not used */
+			vcca1v8_codec: LDO_REG7 {
+				regulator-name = "vcca1v8_codec";
+			};
+
+			vcc3v3_sys_s0: SWITCH_REG1 {
+				regulator-name = "vcc3v3_sys_s0";
+				regulator-always-on;
+				regulator-boot-on;
+				regulator-state-mem {
+					regulator-off-in-suspend;
+				};
+			};
+
+			vcc3v3_s0: SWITCH_REG2 {
+				regulator-name = "vcc3v3_s0";
+			};
+		};
+	};
+
+	vdd_cpu_b: regulator@40 {
+		pinctrl-names = "default";
+		pinctrl-0 = <&vsel1_gpio>;
+		vsel-gpios = <&gpio1 RK_PC1 GPIO_ACTIVE_HIGH>;
+		regulator-compatible = "fan53555-reg";
+	};
+
+	vdd_gpu: regulator@41 {
+		compatible = "silergy,syr828";
+		reg = <0x41>;
+		fcs,suspend-voltage-selector = <1>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&vsel2_gpio>;
+		vsel-gpios = <&gpio1 RK_PB6 GPIO_ACTIVE_HIGH>;
+		regulator-compatible = "fan53555-reg";
+		regulator-name = "vdd_gpu";
+		regulator-min-microvolt = <712500>;
+		regulator-max-microvolt = <1500000>;
+		regulator-ramp-delay = <1000>;
+		regulator-always-on;
+		regulator-boot-on;
+		vin-supply = <&vcc5v0_sys>;
+
+		regulator-state-mem {
+			regulator-off-in-suspend;
+		};
+	};
+};
+
+&pinctrl {
+	pmic {
+		vsel1_gpio: vsel1-gpio {
+			rockchip,pins =
+				<1 RK_PC1 RK_FUNC_GPIO &pcfg_pull_down>;
+		};
+
+		vsel2_gpio: vsel2-gpio {
+			rockchip,pins =
+				<1 RK_PB6 RK_FUNC_GPIO &pcfg_pull_down>;
+		};
+	};
+};
+
+&pmu_io_domains {
+	pmu1830-supply = <&vcc3v0_s3>;
+	status = "okay";
+};
+
+&sdmmc {
+	sd-uhs-sdr104;
+};
+
+&tsadc {
+	/* tshut mode 0:CRU 1:GPIO */
+	rockchip,hw-tshut-mode = <1>;
+	/* tshut polarity 0:LOW 1:HIGH */
+	rockchip,hw-tshut-polarity = <1>;
+	status = "okay";
+};
+
+&gpio1 {
+	usb-mux-hs {
+		gpio-hog;
+		gpios = <RK_PA4 GPIO_ACTIVE_HIGH>;
+		output-low;
+		line-name = "USB_MUX_HS";
+	};
+
+	usb-mux-oe {
+		gpio-hog;
+		gpios = <RK_PB5 GPIO_ACTIVE_LOW>;
+		output-high;
+		line-name = "USB_MUX_OE#";
+	};
+
+	soc-flash-wp {
+		gpio-hog;
+		gpios = <RK_PC2 GPIO_ACTIVE_LOW>;
+		output-low;
+		line-name = "SOC_WP#";
+	};
+};
+
+&gpio2 {
+	sata-flash-wp {
+		gpio-hog;
+		gpios = <RK_PD0 GPIO_ACTIVE_LOW>;
+		output-high;
+		line-name = "SATA_WP#_LV";
+	};
+};
+
+&gpio4 {
+	auto-on-en-d {
+		gpio-hog;
+		gpios = <RK_PD1 GPIO_ACTIVE_HIGH>;
+		output-low;
+		line-name = "AUTO_ON_EN_D";
+	};
+
+	auto-on-en-clk {
+		gpio-hog;
+		gpios = <RK_PD2 GPIO_ACTIVE_HIGH>;
+		output-low;
+		line-name = "AUTO_ON_EN_CLK";
+	};
+
+	board-rev-id-0 {
+		gpio-hog;
+		gpios = <RK_PD5 GPIO_ACTIVE_HIGH>;
+		input;
+	};
+
+	board-rev-id-1 {
+		gpio-hog;
+		gpios = <RK_PD6 GPIO_ACTIVE_HIGH>;
+		input;
+	};
+};
+
+&spi1 {
+	status = "okay";
+
+	spiflash: flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0x0>;
+		spi-max-frequency = <25000000>;
+		status = "okay";
+		m25p,fast-read;
+		u-boot,dm-pre-reloc;
+	};
+};
