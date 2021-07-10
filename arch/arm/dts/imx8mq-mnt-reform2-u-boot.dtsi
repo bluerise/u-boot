@@ -1,0 +1,13 @@
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+
+#include "imx8mq-u-boot.dtsi"
+
+&usdhc1 {
+	mmc-hs400-1_8v;
+};
+
+&usdhc2 {
+	cd-gpios = <&gpio2 12 GPIO_ACTIVE_LOW>;
+	sd-uhs-sdr104;
+	sd-uhs-ddr50;
+};
