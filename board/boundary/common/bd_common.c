@@ -105,6 +105,12 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 		return rc;
 	}
 #endif
+	/*
+	 * For now, we simply always add the simplefb DT node. Later, we
+	 * should be more intelligent, and e.g. only do this if no enabled DT
+	 * node exists for the "real" graphics driver.
+	 */
+	lcd_dt_simplefb_add_node(blob);
 	return 0;
 }
 #endif

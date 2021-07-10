@@ -236,4 +236,7 @@
 #ifdef CONFIG_CMD_PCI
 #define CONFIG_PCI_SCAN_SHOW
 #endif
+
+#define CONFIG_LCD_DT_SIMPLEFB
+
 #endif
