@@ -439,6 +439,8 @@
 #define IMX8MQ_CLK_CLK2				295
 #define IMX8MQ_CLK_CLK2_CG			296
 
+#define IMX8MQ_CLK_PHY_27MHZ			297
+
 #define IMX8MQ_CLK_END				297
 
 #endif /* __DT_BINDINGS_CLOCK_IMX8MQ_H */
