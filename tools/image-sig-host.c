@@ -62,6 +62,7 @@ struct crypto_algo crypto_algos[] = {
 		.add_verify_data = rsa_add_verify_data,
 		.verify = rsa_verify,
 	},
+#if 0
 	{
 		.name = "ecdsa256",
 		.key_len = ECDSA256_BYTES,
@@ -69,6 +70,7 @@ struct crypto_algo crypto_algos[] = {
 		.add_verify_data = ecdsa_add_verify_data,
 		.verify = ecdsa_verify,
 	},
+#endif
 };
 
 struct padding_algo padding_algos[] = {
