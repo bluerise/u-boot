@@ -58,6 +58,92 @@
 			"RINPUT2", "Line In Jack";
 		model = "wm8960-audio";
 	};
+
+	backlight: backlight {
+		compatible = "pwm-backlight";
+		pwms = <&pwm2 0 10000>;
+		enable-gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>;
+		brightness-levels = <0 32 64 128 160 200 255>;
+		default-brightness-level = <6>;
+	};
+
+	panel {
+		compatible = "innolux,n125hce-gn1", "simple-panel";
+		power-supply = <&reg_main_3v3>;
+		backlight = <&backlight>;
+		no-hpd;
+
+		port@0 {
+			panel_in: endpoint {
+				remote-endpoint = <&edp_bridge_out>;
+			};
+		};
+	};
+};
+
+/ {
+	soc@0 {
+		bus@32c00000 {
+			dcss: display-controller@32e00000 {
+				status = "okay";
+
+				compatible = "nxp,imx8mq-dcss";
+				reg = <0x32e00000 0x2d000>, <0x32e2f000 0x1000>;
+				interrupts = <6>, <8>, <9>;
+				interrupt-names = "ctxld", "ctxld_kick", "vblank";
+				interrupt-parent = <&irqsteer>;
+				clocks = <&clk IMX8MQ_CLK_DISP_APB_ROOT>,
+					<&clk IMX8MQ_CLK_DISP_AXI_ROOT>,
+					<&clk IMX8MQ_CLK_DISP_RTRM_ROOT>,
+					<&clk IMX8MQ_CLK_DC_PIXEL>,
+					<&clk IMX8MQ_CLK_DISP_DTRC>,
+					<&clk IMX8MQ_VIDEO2_PLL1_REF_SEL>,
+					<&clk IMX8MQ_CLK_PHY_27MHZ>;
+				clock-names = "apb", "axi", "rtrm", "pix", "dtrc", "pll_src", "pll_phy_ref";
+				assigned-clocks = <&clk IMX8MQ_CLK_DISP_AXI>,
+					<&clk IMX8MQ_CLK_DISP_RTRM>,
+					<&clk IMX8MQ_VIDEO2_PLL1_REF_SEL>,
+					<&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
+					<&clk IMX8MQ_CLK_DC_PIXEL>;
+				assigned-clock-parents = <&clk IMX8MQ_SYS1_PLL_800M>,
+					<&clk IMX8MQ_SYS1_PLL_800M>,
+					<&clk IMX8MQ_CLK_27M>,
+					<&clk IMX8MQ_CLK_25M>,
+					<&clk IMX8MQ_VIDEO_PLL1_OUT>;
+				assigned-clock-rates = <800000000>,
+					<400000000>,
+					<27000000>,
+					<25000000>,
+					<594000000>;
+
+				// internal display (MIPI-DSI/eDP)
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					port@0 {
+						reg = <0>;
+						#address-cells = <1>;
+						#size-cells = <0>;
+						dcss_dsi_out: endpoint@0 {
+							reg = <0>;
+							remote-endpoint = <&mipi_dsi_in>;
+						};
+					};
+				};
+			};
+		};
+	};
+};
+
+// LCDIF is not used, but has to be active or DCSS won't work
+&lcdif {
+	status = "okay";
+	/delete-node/ port@0;
+};
+
+&dphy {
+	status = "okay";
 };
 
 &fec1 {
@@ -83,6 +169,69 @@
 	};
 };
 
+&i2c4 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c4>;
+	status = "okay";
+
+	// DSI to eDP converter on motherboard
+	edp_bridge: sn65dsi86@2c {
+		compatible = "ti,sn65dsi86";
+		reg = <0x2c>;
+		enable-gpios = <&gpio3 20 GPIO_ACTIVE_HIGH>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				edp_bridge_in: endpoint {
+					remote-endpoint = <&mipi_dsi_out>;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+
+				edp_bridge_out: endpoint {
+					remote-endpoint = <&panel_in>;
+				};
+			};
+		};
+	};
+};
+
+&mipi_dsi {
+	status = "okay";
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0>;
+
+			// We don't want input from LCDIF
+			/delete-node/ endpoint@0;
+
+			mipi_dsi_in: endpoint@1 {
+				reg = <1>;
+				remote-endpoint = <&dcss_dsi_out>;
+			};
+		};
+		port@1 {
+			reg = <1>;
+			mipi_dsi_out: endpoint {
+				remote-endpoint = <&edp_bridge_in>;
+			};
+		};
+	};
+};
+
 &pcie1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pcie1>;
@@ -92,6 +241,12 @@
 		 <&clk IMX8MQ_CLK_PCIE2_PHY>,
 		 <&pcie1_refclk>;
 	clock-names = "pcie", "pcie_aux", "pcie_phy", "pcie_bus";
+	status = "okay";
+};
+
+&pwm2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pwm2>;
 	status = "okay";
 };
 
@@ -175,9 +330,22 @@
 		>;
 	};
 
+	pinctrl_i2c4: i2c4grp {
+		fsl,pins = <
+			MX8MQ_IOMUXC_I2C4_SCL_I2C4_SCL			0x4000007f
+			MX8MQ_IOMUXC_I2C4_SDA_I2C4_SDA			0x4000007f
+		>;
+	};
+
 	pinctrl_pcie1: pcie1grp {
 		fsl,pins = <
 			MX8MQ_IOMUXC_SAI5_RXD2_GPIO3_IO23		0x16
+		>;
+	};
+
+	pinctrl_pwm2: pwm2grp {
+		fsl,pins = <
+		MX8MQ_IOMUXC_SPDIF_RX_PWM2_OUT			0x16
 		>;
 	};
 
