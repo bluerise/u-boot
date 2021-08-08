@@ -107,8 +107,8 @@
 					<&clk IMX8MQ_CLK_DC_PIXEL>;
 				assigned-clock-parents = <&clk IMX8MQ_SYS1_PLL_800M>,
 					<&clk IMX8MQ_SYS1_PLL_800M>,
-					<&clk IMX8MQ_CLK_27M>,
-					<&clk IMX8MQ_CLK_25M>,
+					<&osc_27m>,
+					<&osc_25m>,
 					<&clk IMX8MQ_VIDEO_PLL1_OUT>;
 				assigned-clock-rates = <800000000>,
 					<400000000>,
