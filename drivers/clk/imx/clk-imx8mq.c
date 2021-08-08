@@ -463,6 +463,14 @@ static int imx8mq_clocks_probe(struct udevice *dev)
 	clk_dm(IMX8MQ_AUDIO_PLL2_BYPASS, imx_clk_mux("audio_pll2_bypass", base + 0x8, 14, 1, audio_pll2_bypass_sels, ARRAY_SIZE(audio_pll2_bypass_sels)));
 	clk_dm(IMX8MQ_VIDEO_PLL1_BYPASS, imx_clk_mux("video_pll1_bypass", base + 0x10, 14, 1, video_pll1_bypass_sels, ARRAY_SIZE(video_pll1_bypass_sels)));
 
+	/* unbypass all the plls */
+	struct clk *c, *cp;
+	clk_get_by_id(IMX8MQ_GPU_PLL_BYPASS, &c); clk_get_by_id(IMX8MQ_GPU_PLL, &cp); imx8mq_clk_set_parent(c, cp);
+	clk_get_by_id(IMX8MQ_VPU_PLL_BYPASS, &c); clk_get_by_id(IMX8MQ_VPU_PLL, &cp); imx8mq_clk_set_parent(c, cp);
+	clk_get_by_id(IMX8MQ_AUDIO_PLL1_BYPASS, &c); clk_get_by_id(IMX8MQ_AUDIO_PLL1, &cp); imx8mq_clk_set_parent(c, cp);
+	clk_get_by_id(IMX8MQ_AUDIO_PLL2_BYPASS, &c); clk_get_by_id(IMX8MQ_AUDIO_PLL2, &cp); imx8mq_clk_set_parent(c, cp);
+	clk_get_by_id(IMX8MQ_VIDEO_PLL1_BYPASS, &c); clk_get_by_id(IMX8MQ_VIDEO_PLL1, &cp); imx8mq_clk_set_parent(c, cp);
+
 #if 0
 	/* unbypass all the plls */
 	clk_set_parent(clks[IMX8MQ_GPU_PLL_BYPASS], clks[IMX8MQ_GPU_PLL]);

@@ -118,16 +118,19 @@
 					<&clk IMX8MQ_CLK_DISP_RTRM>,
 					<&clk IMX8MQ_VIDEO2_PLL1_REF_SEL>,
 					<&clk IMX8MQ_VIDEO_PLL1_REF_SEL>,
-					<&clk IMX8MQ_CLK_DC_PIXEL>;
+					<&clk IMX8MQ_CLK_DC_PIXEL>,
+					<&clk IMX8MQ_CLK_LCDIF_PIXEL>;
 				assigned-clock-parents = <&clk IMX8MQ_SYS1_PLL_800M>,
 					<&clk IMX8MQ_SYS1_PLL_800M>,
 					<&osc_27m>,
 					<&osc_25m>,
+					<&clk IMX8MQ_VIDEO_PLL1_OUT>,
 					<&clk IMX8MQ_VIDEO_PLL1_OUT>;
 				assigned-clock-rates = <800000000>,
 					<400000000>,
 					<0>,
 					<0>,
+					<594000000>,
 					<594000000>;
 
 				// internal display (MIPI-DSI/eDP)

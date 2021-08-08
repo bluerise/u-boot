@@ -61,6 +61,8 @@ struct imx8m_dcss_priv {
 	bool vpol;		/* vertical pulse polarity	*/
 
 	fdt_addr_t addr;
+
+	struct clk *pix_clk;
 };
 
 __weak int imx8m_dcss_clock_init(u32 pixclk)
@@ -82,7 +84,7 @@ static void imx8m_dcss_reset(struct udevice *dev)
 	reg32_write(priv->addr + 0x2f000, 0xffffffff);
 
 	/* DCSS clock selection */
-	reg32_write(priv->addr + 0x2f010, 0x1);
+	reg32_write(priv->addr + 0x2f010, 1U << 8);
 	temp = reg32_read(priv->addr + 0x2f010);
 	debug("%s(): DCSS clock control 0x%08x\n", __func__, temp);
 }
@@ -439,6 +441,7 @@ static int imx8m_dcss_get_timings_from_display(struct udevice *dev,
 
 	if (timings->flags & DISPLAY_FLAGS_VSYNC_HIGH)
 		priv->vpol = true;
+	printf("bla %d %d\n", priv->vpol, priv->hpol);
 
 	return 0;
 }
@@ -468,6 +471,10 @@ static int imx8m_dcss_probe(struct udevice *dev)
 
 	imx8m_dcss_power_init();
 
+	if (priv->pix_clk) {
+		clk_set_rate(priv->pix_clk, priv->timings.pixelclock.typ);
+		clk_prepare_enable(priv->pix_clk);
+	}
 	imx8m_dcss_clock_init(priv->timings.pixelclock.typ);
 
 	imx8m_dcss_reset(dev);
@@ -493,15 +500,15 @@ static int imx8m_dcss_probe(struct udevice *dev)
 #endif
 	}
 
-	printf("%s:%d\n", __func__, __LINE__);
-	imx8m_dcss_init(dev);
-	printf("%s:%d\n", __func__, __LINE__);
-
 	if (priv->disp_dev) {
 		priv->disp_dev = video_link_get_next_device(priv->disp_dev);
 		if (device_get_uclass_id(priv->disp_dev) == UCLASS_DISPLAY)
 			display_enable(priv->disp_dev, 32, NULL);
 	}
+
+	printf("%s:%d\n", __func__, __LINE__);
+	imx8m_dcss_init(dev);
+	printf("%s:%d\n", __func__, __LINE__);
 
 	uc_priv->bpix = VIDEO_BPP32;
 	uc_priv->xsize = priv->timings.hactive.typ;
@@ -512,6 +519,8 @@ static int imx8m_dcss_probe(struct udevice *dev)
 	fb_start = plat->base & ~(MMU_SECTION_SIZE - 1);
 	fb_end = plat->base + plat->size;
 	fb_end = ALIGN(fb_end, 1 << MMU_SECTION_SHIFT);
+	printf("%s:%d: fb_start %x fb_end %x\n",
+	    __func__, __LINE__, plat->base, plat->base + plat->size);
 	mmu_set_region_dcache_behaviour(fb_start, fb_end - fb_start,
 					DCACHE_WRITEBACK);
 	video_set_flush_dcache(dev, true);
@@ -544,6 +553,26 @@ static int imx8m_dcss_remove(struct udevice *dev)
 	return 0;
 }
 
+static int imx8m_dcss_ofdata_to_platdata(struct udevice *dev)
+{
+	struct imx8m_dcss_priv *priv = dev_get_priv(dev);
+	struct clk *clk;
+	int ret;
+
+	printf("%s\n", __func__);
+
+	/* DSI clocks */
+	clk = devm_clk_get(dev, "pix");
+	if (IS_ERR(clk)) {
+		ret = PTR_ERR(clk);
+		debug("Failed to get pix clock: %d\n", ret);
+		return ret;
+	}
+	priv->pix_clk = clk;
+
+	return 0;
+}
+
 static const struct udevice_id imx8m_dcss_ids[] = {
 	{ .compatible = "nxp,imx8mq-dcss" },
 	{ /* sentinel */ }
@@ -553,6 +582,7 @@ U_BOOT_DRIVER(imx8m_dcss) = {
 	.name	= "imx8m_dcss",
 	.id	= UCLASS_VIDEO,
 	.of_match = imx8m_dcss_ids,
+	.of_to_plat = imx8m_dcss_ofdata_to_platdata,
 	.bind	= imx8m_dcss_bind,
 	.probe	= imx8m_dcss_probe,
 	.remove = imx8m_dcss_remove,

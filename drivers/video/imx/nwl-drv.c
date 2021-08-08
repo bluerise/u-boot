@@ -117,6 +117,10 @@ static u32 get_pixclock(struct nwl_dsi *dsi, unsigned long pixclock)
 	u32 video_pll, n;
 	int ret;
 
+	// FIXME
+	dsi->pixclock = 162 * 1000 * 1000;
+	return dsi->pixclock;
+
 	video_pll = pixclock;
 	/* Video pll must be from 500MHz to 2000 MHz */
 	if (video_pll < 500000000) {
@@ -163,11 +167,12 @@ static struct mode_config *nwl_dsi_mode_probe(struct nwl_dsi *dsi)
 		if (config->clock == clock)
 			return config;
 
-	phy_ref_rate = get_pixclock(dsi, clock);
-	while (phy_ref_rate >= 48000000)
-		phy_ref_rate >>= 1;
-	while (phy_ref_rate < 24000000)
-		phy_ref_rate <<= 1;
+//	phy_ref_rate = get_pixclock(dsi, clock);
+//	while (phy_ref_rate >= 48000000)
+//		phy_ref_rate >>= 1;
+//	while (phy_ref_rate < 24000000)
+//		phy_ref_rate <<= 1;
+	phy_ref_rate = 24 * 1000 * 1000;
 	debug("%s: phyref %ld %ld\n", __func__, dsi->phy_ref_rate, phy_ref_rate);
 
 	dsi->phy_ref_rate = 0;
