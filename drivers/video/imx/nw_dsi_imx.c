@@ -17,6 +17,7 @@
 #include <asm/io.h>
 #include <asm/arch/gpio.h>
 #include <dm/device-internal.h>
+#include <dm/device_compat.h>
 #include <linux/iopoll.h>
 #include <linux/err.h>
 #include <power/regulator.h>
@@ -38,13 +39,16 @@ static int nw_dsi_imx_attach(struct udevice *dev)
 	int ret;
 
 	priv->panel = video_link_get_next_device(dev);
+	priv->panel = video_link_get_next_device(dev);
+	if (priv->panel)
+		priv->panel = video_link_get_next_device(priv->panel);
 	if (!priv->panel ||
 		device_get_uclass_id(priv->panel) != UCLASS_PANEL) {
 		dev_err(dev, "get panel device error\n");
 		return -ENODEV;
 	}
 
-	mplat = dev_get_platdata(priv->panel);
+	mplat = dev_get_plat(priv->panel);
 	mplat->device = &priv->device;
 
 	ret = video_link_get_display_timings(&timings);
@@ -52,6 +56,10 @@ static int nw_dsi_imx_attach(struct udevice *dev)
 		dev_err(dev, "decode display timing error %d\n", ret);
 		return ret;
 	}
+
+	/* FIXME: somewhere else */
+	device->lanes = 4;
+	device->format = MIPI_DSI_FMT_RGB888;
 
 	ret = uclass_get_device(UCLASS_DSI_HOST, 0, &priv->dsi_host);
 	if (ret) {
@@ -66,12 +74,15 @@ static int nw_dsi_imx_attach(struct udevice *dev)
 		return ret;
 	}
 
+#if 0
 	ret = panel_init(priv->panel);
 	if (ret) {
 		dev_err(dev, "panel %s panel_init error %d\n",
 			priv->panel->name, ret);
 		return ret;
 	}
+#endif
+
 	return 0;
 }
 
@@ -80,18 +91,21 @@ static int nw_dsi_imx_set_backlight(struct udevice *dev, int percent)
 	struct nw_dsi_imx_priv *priv = dev_get_priv(dev);
 	int ret;
 
+	printf("%s:%d\n", __func__, __LINE__);
 	ret = dsi_host_enable(priv->dsi_host);
 	if (ret) {
 		dev_err(dev, "failed to enable mipi dsi host\n");
 		return ret;
 	}
 
+	printf("%s:%d\n", __func__, __LINE__);
 	ret = panel_enable_backlight(priv->panel);
 	if (ret) {
 		dev_err(dev, "panel %s enable backlight error %d\n",
 			priv->panel->name, ret);
 		return ret;
 	}
+	printf("%s:%d\n", __func__, __LINE__);
 
 	return 0;
 }
@@ -114,11 +128,13 @@ static int nw_dsi_imx_remove(struct udevice *dev)
 	if (priv->panel)
 		device_remove(priv->panel, DM_REMOVE_NORMAL);
 
+#if 0
 	ret = dsi_host_disable(priv->dsi_host);
 	if (ret) {
 		dev_err(dev, "failed to enable mipi dsi host\n");
 		return ret;
 	}
+#endif
 
 	return 0;
 }
@@ -142,5 +158,5 @@ U_BOOT_DRIVER(nw_dsi_imx) = {
 	.remove 			= nw_dsi_imx_remove,
 	.probe				= nw_dsi_imx_probe,
 	.ops				= &nw_dsi_imx_ops,
-	.priv_auto_alloc_size		= sizeof(struct nw_dsi_imx_priv),
+	.priv_auto			= sizeof(struct nw_dsi_imx_priv),
 };

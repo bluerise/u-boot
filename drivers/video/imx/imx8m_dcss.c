@@ -6,6 +6,7 @@
 #include <common.h>
 #include <dm.h>
 #include <dm/device-internal.h>
+#include <dm/device_compat.h>
 #include <env.h>
 #include <linux/errno.h>
 #include <malloc.h>
@@ -418,6 +419,8 @@ static int imx8m_dcss_get_timings_from_display(struct udevice *dev,
 	int err;
 
 	priv->disp_dev = video_link_get_next_device(dev);
+	if (priv->disp_dev)
+		priv->disp_dev = video_link_get_next_device(priv->disp_dev);
 	if (!priv->disp_dev ||
 	    (device_get_uclass_id(priv->disp_dev) != UCLASS_VIDEO_BRIDGE
 	    && device_get_uclass_id(priv->disp_dev) != UCLASS_DISPLAY)) {
@@ -472,11 +475,13 @@ static int imx8m_dcss_probe(struct udevice *dev)
 	if (priv->disp_dev) {
 #if IS_ENABLED(CONFIG_VIDEO_BRIDGE)
 		if (device_get_uclass_id(priv->disp_dev) == UCLASS_VIDEO_BRIDGE) {
+	printf("%s:%d\n", __func__, __LINE__);
 			ret = video_bridge_attach(priv->disp_dev);
 			if (ret) {
 				dev_err(dev, "fail to attach bridge\n");
 				return ret;
 			}
+	printf("%s:%d\n", __func__, __LINE__);
 
 			ret = video_bridge_set_backlight(priv->disp_dev, 80);
 			if (ret) {
@@ -484,16 +489,24 @@ static int imx8m_dcss_probe(struct udevice *dev)
 				return ret;
 			}
 		}
+	printf("%s:%d\n", __func__, __LINE__);
 #endif
+	}
+
+	printf("%s:%d\n", __func__, __LINE__);
+	imx8m_dcss_init(dev);
+	printf("%s:%d\n", __func__, __LINE__);
+
+	if (priv->disp_dev) {
+		priv->disp_dev = video_link_get_next_device(priv->disp_dev);
 		if (device_get_uclass_id(priv->disp_dev) == UCLASS_DISPLAY)
 			display_enable(priv->disp_dev, 32, NULL);
 	}
 
-	imx8m_dcss_init(dev);
-
 	uc_priv->bpix = VIDEO_BPP32;
 	uc_priv->xsize = priv->timings.hactive.typ;
 	uc_priv->ysize = priv->timings.vactive.typ;
+	printf("%s:%d\n", __func__, __LINE__);
 
 	/* Enable dcache for the frame buffer */
 	fb_start = plat->base & ~(MMU_SECTION_SIZE - 1);

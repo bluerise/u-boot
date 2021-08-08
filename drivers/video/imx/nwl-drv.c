@@ -471,6 +471,12 @@ static int nwl_enable(struct udevice *dev)
 
 	debug("%s:\n", __func__);
 
+	/* FIXME: somewhere els e*/
+	dsi->device->lanes = 4;
+	dsi->device->format = MIPI_DSI_FMT_RGB888;
+	dsi->lanes = dsi->device->lanes;
+	dsi->format = dsi->device->format;
+
 	dsi->min_hs_clock_multiple = dsi->device->hsmult;
 	dsi->mipi_dsi_multiple = dsi->device->mipi_dsi_multiple;
 	dsi->max_data_lanes = dsi->device->lanes;

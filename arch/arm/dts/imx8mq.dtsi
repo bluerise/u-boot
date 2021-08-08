@@ -520,7 +520,7 @@
 						  <&clk IMX8MQ_VIDEO_PLL1_BYPASS>,
 						  <&clk IMX8MQ_CLK_LCDIF_PIXEL>,
 						  <&clk IMX8MQ_VIDEO_PLL1>;
-				assigned-clock-parents = <&clk IMX8MQ_CLK_25M>,
+				assigned-clock-parents = <&osc_25m>,
 						  <&clk IMX8MQ_VIDEO_PLL1>,
 						  <&clk IMX8MQ_VIDEO_PLL1_OUT>;
 				assigned-clock-rates = <0>, <0>, <0>, <594000000>;
@@ -968,6 +968,11 @@
 					reg = <0x3000 0x1000>;
 					interrupts = <GIC_SPI 114 IRQ_TYPE_LEVEL_HIGH>;
 				};
+			};
+
+			mipi_dsi_bridge: mipi-dsi-bridge {
+				compatible = "fsl,imx8mq-mipi-dsi";
+				status = "disabled";
 			};
 
 			mipi_dsi: mipi-dsi@30a00000 {
