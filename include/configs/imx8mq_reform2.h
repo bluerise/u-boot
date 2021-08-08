@@ -69,6 +69,8 @@
 	"fdtfile=" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"console=ttymxc0,115200\0" \
 	"stdin=serial,usbkbd\0" \
+	"stdout=serial,vidconsole\0" \
+	"stderr=serial,vidconsole\0" \
 	BOOTENV
 
 /* Link Definitions */
