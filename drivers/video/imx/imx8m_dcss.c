@@ -418,20 +418,9 @@ static int imx8m_dcss_get_timings_from_display(struct udevice *dev,
 	int err;
 
 	priv->disp_dev = video_link_get_next_device(dev);
-	if (!priv->disp_dev) {
-		printf("fail to find display device\n");
-		return -ENODEV;
-	}
-
-	if (device_get_uclass_id(priv->disp_dev) != UCLASS_DISPLAY) {
-		priv->disp_dev = video_link_get_next_device(priv->disp_dev);
-		if (!priv->disp_dev) {
-			printf("fail to find display device\n");
-			return -ENODEV;
-		}
-	}
-
-	if (device_get_uclass_id(priv->disp_dev) != UCLASS_DISPLAY) {
+	if (!priv->disp_dev ||
+	    (device_get_uclass_id(priv->disp_dev) != UCLASS_VIDEO_BRIDGE
+	    && device_get_uclass_id(priv->disp_dev) != UCLASS_DISPLAY)) {
 		printf("fail to find display device\n");
 		return -ENODEV;
 	}
@@ -480,7 +469,25 @@ static int imx8m_dcss_probe(struct udevice *dev)
 
 	imx8m_dcss_reset(dev);
 
-	display_enable(priv->disp_dev, 32, NULL);
+	if (priv->disp_dev) {
+#if IS_ENABLED(CONFIG_VIDEO_BRIDGE)
+		if (device_get_uclass_id(priv->disp_dev) == UCLASS_VIDEO_BRIDGE) {
+			ret = video_bridge_attach(priv->disp_dev);
+			if (ret) {
+				dev_err(dev, "fail to attach bridge\n");
+				return ret;
+			}
+
+			ret = video_bridge_set_backlight(priv->disp_dev, 80);
+			if (ret) {
+				dev_err(dev, "fail to set backlight\n");
+				return ret;
+			}
+		}
+#endif
+		if (device_get_uclass_id(priv->disp_dev) == UCLASS_DISPLAY)
+			display_enable(priv->disp_dev, 32, NULL);
+	}
 
 	imx8m_dcss_init(dev);
 
