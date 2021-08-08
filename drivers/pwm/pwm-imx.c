@@ -10,6 +10,7 @@
 #include <clk.h>
 #include <div64.h>
 #include <dm.h>
+#include <dm/device_compat.h>
 #include <log.h>
 #include <pwm.h>
 #include <asm/arch/imx-regs.h>
