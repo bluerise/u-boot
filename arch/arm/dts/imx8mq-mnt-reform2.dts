@@ -78,6 +78,20 @@
 				remote-endpoint = <&edp_bridge_out>;
 			};
 		};
+
+		display-timings {
+			t_mipi: t-dsi-default {
+				clock-frequency = <162000000>;
+				hactive = <1920>;
+				vactive = <1080>;
+				hback-porch = <80>;
+				hfront-porch = <40>;
+				vback-porch = <24>;
+				vfront-porch = <4>;
+				hsync-len = <40>;
+				vsync-len = <4>;
+			};
+		};
 	};
 };
 
@@ -112,8 +126,8 @@
 					<&clk IMX8MQ_VIDEO_PLL1_OUT>;
 				assigned-clock-rates = <800000000>,
 					<400000000>,
-					<27000000>,
-					<25000000>,
+					<0>,
+					<0>,
 					<594000000>;
 
 				// internal display (MIPI-DSI/eDP)

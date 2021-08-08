@@ -864,8 +864,7 @@ static int nwl_dsi_ofdata_to_platdata(struct udevice *dev)
 		dsi->lcdif_clk = NULL;
 
 	if (dsi->pdata->mux_present) {
-		dsi->mux = devm_mux_control_get(dev, NULL);
-		if (IS_ERR(dsi->mux)) {
+		if (mux_get_by_index(dev, 0, &dsi->mux)) {
 			ret = PTR_ERR(dsi->mux);
 			debug("Failed to get mux: %d\n", ret);
 			return ret;

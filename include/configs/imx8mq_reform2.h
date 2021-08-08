@@ -108,4 +108,6 @@
 #define CONFIG_PCI_SCAN_SHOW
 #endif
 
+#define CONFIG_IMX6_PWM_PER_CLK		66000000
+
 #endif

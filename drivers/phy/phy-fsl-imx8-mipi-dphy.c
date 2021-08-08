@@ -86,7 +86,6 @@ struct mixel_dphy_priv {
 	struct mixel_dphy_cfg cfg;
 	struct regmap *regmap;
 	struct clk *phy_ref_clk;
-	struct clk	*dsi_clk;
 	unsigned long	frequency;
 	const struct mixel_dphy_devdata *devdata;
 };
@@ -342,9 +341,6 @@ static int mixel_dphy_configure(struct phy *phy, void *params)
 	ref_clk = clk_get_rate(priv->phy_ref_clk);
 	/* Divided by 2 because mipi output clock is DDR */
 	priv->frequency = config->hs_clk_rate >> 1;
-	if (priv->dsi_clk) {
-		clk_set_rate(priv->dsi_clk, priv->frequency);
-	}
 	debug("%s:%ld ref_clk=%ld, cm=%d, co=%d cn=%d\n",
 		__func__, priv->frequency, ref_clk, cfg.cm, cfg.co, cfg.cn);
 
@@ -506,11 +502,6 @@ static int mixel_dphy_probe(struct udevice *dev)
 	debug("phy_ref clock rate: %lu\n",
 		clk_get_rate(priv->phy_ref_clk));
 
-	priv->dsi_clk = devm_clk_get(dev, "result");
-	if (IS_ERR(priv->dsi_clk)) {
-		debug("No dsi_clk clock found\n");
-		return PTR_ERR(priv->dsi_clk);
-	}
 	return 0;
 }
 

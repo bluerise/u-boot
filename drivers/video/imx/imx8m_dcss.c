@@ -418,9 +418,20 @@ static int imx8m_dcss_get_timings_from_display(struct udevice *dev,
 	int err;
 
 	priv->disp_dev = video_link_get_next_device(dev);
-	if (!priv->disp_dev ||
-		device_get_uclass_id(priv->disp_dev) != UCLASS_DISPLAY) {
+	if (!priv->disp_dev) {
+		printf("fail to find display device\n");
+		return -ENODEV;
+	}
 
+	if (device_get_uclass_id(priv->disp_dev) != UCLASS_DISPLAY) {
+		priv->disp_dev = video_link_get_next_device(priv->disp_dev);
+		if (!priv->disp_dev) {
+			printf("fail to find display device\n");
+			return -ENODEV;
+		}
+	}
+
+	if (device_get_uclass_id(priv->disp_dev) != UCLASS_DISPLAY) {
 		printf("fail to find display device\n");
 		return -ENODEV;
 	}

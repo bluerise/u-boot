@@ -487,8 +487,10 @@ int device_probe(struct udevice *dev)
 	const struct driver *drv;
 	int ret;
 
-	if (!dev)
+	if (!dev) {
+		printf("%s:%d\n", __func__, __LINE__);
 		return -EINVAL;
+	}
 
 	if (dev_get_flags(dev) & DM_FLAG_ACTIVATED)
 		return 0;
@@ -497,14 +499,18 @@ int device_probe(struct udevice *dev)
 	assert(drv);
 
 	ret = device_of_to_plat(dev);
-	if (ret)
+	if (ret) {
+		printf("%s:%d\n", __func__, __LINE__);
 		goto fail;
+	}
 
 	/* Ensure all parents are probed */
 	if (dev->parent) {
 		ret = device_probe(dev->parent);
-		if (ret)
-			goto fail;
+	if (ret) {
+		printf("%s:%d\n", __func__, __LINE__);
+		goto fail;
+	}
 
 		/*
 		 * The device might have already been probed during
@@ -522,8 +528,10 @@ int device_probe(struct udevice *dev)
 	    (device_get_uclass_id(dev) != UCLASS_POWER_DOMAIN) &&
 	    !(drv->flags & DM_FLAG_DEFAULT_PD_CTRL_OFF)) {
 		ret = dev_power_domain_on(dev);
-		if (ret)
+		if (ret) {
+			printf("%s:%d\n", __func__, __LINE__);
 			goto fail;
+		}
 	}
 
 	/*
@@ -556,17 +564,23 @@ int device_probe(struct udevice *dev)
 	}
 
 	ret = device_get_dma_constraints(dev);
-	if (ret)
+	if (ret) {
+		printf("%s:%d\n", __func__, __LINE__);
 		goto fail;
+	}
 
 	ret = uclass_pre_probe_device(dev);
-	if (ret)
+	if (ret) {
+		printf("%s:%d\n", __func__, __LINE__);
 		goto fail;
+	}
 
 	if (dev->parent && dev->parent->driver->child_pre_probe) {
 		ret = dev->parent->driver->child_pre_probe(dev);
-		if (ret)
-			goto fail;
+	if (ret) {
+		printf("%s:%d\n", __func__, __LINE__);
+		goto fail;
+	}
 	}
 
 	/* Only handle devices that have a valid ofnode */
@@ -576,19 +590,25 @@ int device_probe(struct udevice *dev)
 		 * properties
 		 */
 		ret = clk_set_defaults(dev, CLK_DEFAULTS_PRE);
-		if (ret)
-			goto fail;
+	if (ret) {
+		printf("%s:%d\n", __func__, __LINE__);
+		goto fail;
+	}
 	}
 
 	if (drv->probe) {
 		ret = drv->probe(dev);
-		if (ret)
-			goto fail;
+	if (ret) {
+		printf("%s:%d\n", __func__, __LINE__);
+		goto fail;
+	}
 	}
 
 	ret = uclass_post_probe_device(dev);
-	if (ret)
+	if (ret) {
+		printf("%s:%d\n", __func__, __LINE__);
 		goto fail_uclass;
+	}
 
 	if (dev->parent && device_get_uclass_id(dev) == UCLASS_PINCTRL) {
 		ret = pinctrl_select_state(dev, "default");
@@ -604,6 +624,7 @@ fail_uclass:
 			__func__, dev->name);
 	}
 fail:
+	printf("%s:%d: failed %s\n", __func__, __LINE__, dev->name);
 	dev_bic_flags(dev, DM_FLAG_ACTIVATED);
 
 	device_free(dev);
