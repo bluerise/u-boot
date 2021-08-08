@@ -33,3 +33,11 @@ config VIDEO_BRIDGE_ANALOGIX_ANX6345
 	help
 	 The Analogix ANX6345 is RGB-to-DP converter. It enables an eDP LCD
 	 panel to be connected to an parallel LCD interface.
+
+config VIDEO_BRIDGE_TI_SN65DSI86
+	bool "Support TI SN65DSI86 MIPI-DSI->DP bridge"
+	depends on VIDEO_BRIDGE
+	select DM_I2C
+	help
+	 The TI SN65DSI86 is MIPI-DSI-to-DP converter. It enables an eDP LCD
+	 panel to be connected to an parallel LCD interface.
