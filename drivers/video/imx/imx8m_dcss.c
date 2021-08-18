@@ -421,8 +421,6 @@ static int imx8m_dcss_get_timings_from_display(struct udevice *dev,
 	int err;
 
 	priv->disp_dev = video_link_get_next_device(dev);
-	if (priv->disp_dev)
-		priv->disp_dev = video_link_get_next_device(priv->disp_dev);
 	if (!priv->disp_dev ||
 	    (device_get_uclass_id(priv->disp_dev) != UCLASS_VIDEO_BRIDGE
 	    && device_get_uclass_id(priv->disp_dev) != UCLASS_DISPLAY)) {
@@ -501,6 +499,7 @@ static int imx8m_dcss_probe(struct udevice *dev)
 	}
 
 	if (priv->disp_dev) {
+		priv->disp_dev = video_link_get_next_device(priv->disp_dev);
 		priv->disp_dev = video_link_get_next_device(priv->disp_dev);
 		if (device_get_uclass_id(priv->disp_dev) == UCLASS_DISPLAY)
 			display_enable(priv->disp_dev, 32, NULL);

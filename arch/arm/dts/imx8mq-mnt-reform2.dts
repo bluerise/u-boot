@@ -144,7 +144,7 @@
 						#size-cells = <0>;
 						dcss_dsi_out: endpoint@0 {
 							reg = <0>;
-							remote-endpoint = <&mipi_dsi_in>;
+							remote-endpoint = <&mipi_dsi_bridge_in>;
 						};
 					};
 				};
@@ -205,7 +205,7 @@
 				reg = <0>;
 
 				edp_bridge_in: endpoint {
-					remote-endpoint = <&mipi_dsi_bridge_out>;
+					remote-endpoint = <&mipi_dsi_out>;
 				};
 			};
 
@@ -231,7 +231,7 @@
 			reg = <0>;
 
 			mipi_dsi_bridge_in: endpoint {
-				remote-endpoint = <&mipi_dsi_out>;
+				remote-endpoint = <&dcss_dsi_out>;
 			};
 		};
 
@@ -239,7 +239,7 @@
 			reg = <1>;
 
 			mipi_dsi_bridge_out: endpoint {
-				remote-endpoint = <&edp_bridge_in>;
+				remote-endpoint = <&mipi_dsi_in>;
 			};
 		};
 	};
@@ -262,13 +262,13 @@
 
 			mipi_dsi_in: endpoint@1 {
 				reg = <1>;
-				remote-endpoint = <&dcss_dsi_out>;
+				remote-endpoint = <&mipi_dsi_bridge_out>;
 			};
 		};
 		port@1 {
 			reg = <1>;
 			mipi_dsi_out: endpoint {
-				remote-endpoint = <&mipi_dsi_bridge_in>;
+				remote-endpoint = <&edp_bridge_in>;
 			};
 		};
 	};

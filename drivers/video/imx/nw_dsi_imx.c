@@ -39,7 +39,8 @@ static int nw_dsi_imx_attach(struct udevice *dev)
 	int ret;
 
 	priv->panel = video_link_get_next_device(dev);
-	priv->panel = video_link_get_next_device(dev);
+	if (priv->panel)
+		priv->panel = video_link_get_next_device(priv->panel);
 	if (priv->panel)
 		priv->panel = video_link_get_next_device(priv->panel);
 	if (!priv->panel ||
