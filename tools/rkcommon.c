@@ -548,19 +548,11 @@ void rkcommon_print_header(const void *buf)
 		boot_size = header0.init_boot_size * RK_BLK_SIZE - init_size;
 	}
 	printf("Image Type:   Rockchip %s (%s) boot image\n",
-<<<<<<< HEAD
 	       spl_info->spl_hdr,
 	       (image_type == IH_TYPE_RKSD) ? "SD/MMC" : "SPI");
 	init_size = le16_to_cpu(header0.init_size) * RK_BLK_SIZE;
 	printf("Init Data Size: %d bytes\n", init_size);
 
-	boot_size = le16_to_cpu(header0.init_boot_size) * RK_BLK_SIZE - init_size;
-=======
-		       spl_info->spl_hdr,
-		       (image_type == IH_TYPE_RKSD) ? "SD/MMC" : "SPI");
-	printf("Init Data Size: %d bytes\n", init_size);
-
->>>>>>> 86dcc427ad2 (tools: mkimage: add 356X support)
 	if (boot_size != RK_MAX_BOOT_SIZE)
 		printf("Boot Data Size: %d bytes\n", boot_size);
 }
