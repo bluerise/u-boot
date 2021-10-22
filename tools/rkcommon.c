@@ -550,7 +550,6 @@ void rkcommon_print_header(const void *buf)
 	printf("Image Type:   Rockchip %s (%s) boot image\n",
 	       spl_info->spl_hdr,
 	       (image_type == IH_TYPE_RKSD) ? "SD/MMC" : "SPI");
-	init_size = le16_to_cpu(header0.init_size) * RK_BLK_SIZE;
 	printf("Init Data Size: %d bytes\n", init_size);
 
 	if (boot_size != RK_MAX_BOOT_SIZE)
