@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright 2015 Google,  Inc
  * Written by Simon Glass <sjg@chromium.org>
  *
  * (C) 2017 Theobroma Systems Design und Consulting GmbH
+ *
+ * SPDX-License-Identifier:	GPL-2.0+
  *
  * Helper functions for Rockchip images
  */
@@ -97,7 +98,7 @@ struct header0_info {
 };
 
 /**
- * struct header1_info
+ * struct header1 info
  */
 struct header1_info {
 	uint32_t magic;
@@ -193,7 +194,7 @@ static int rkcommon_get_aligned_size(struct image_tool_params *params,
 
 int rkcommon_check_params(struct image_tool_params *params)
 {
-	int i, size;
+	int i;
 
 	/*
 	 * If this is a operation (list or extract), the don't require
@@ -213,17 +214,17 @@ int rkcommon_check_params(struct image_tool_params *params)
 		spl_params.boot_file += 1;
 	}
 
-	size = rkcommon_get_aligned_size(params, spl_params.init_file);
-	if (size < 0)
+	spl_params.init_size =
+		rkcommon_get_aligned_size(params, spl_params.init_file);
+	if (spl_params.init_size < 0)
 		return EXIT_FAILURE;
-	spl_params.init_size = size;
 
 	/* Boot file is optional, and only for back-to-bootrom functionality. */
 	if (spl_params.boot_file) {
-		size = rkcommon_get_aligned_size(params, spl_params.boot_file);
-		if (size < 0)
+		spl_params.boot_size =
+			rkcommon_get_aligned_size(params, spl_params.boot_file);
+		if (spl_params.boot_size < 0)
 			return EXIT_FAILURE;
-		spl_params.boot_size = size;
 	}
 
 	if (spl_params.init_size > rkcommon_get_spl_size(params)) {
@@ -301,13 +302,12 @@ static void do_sha256_hash(uint8_t *buf, uint32_t size, uint8_t *out)
 static void rkcommon_set_header0(void *buf, struct image_tool_params *params)
 {
 	struct header0_info *hdr = buf;
-	uint32_t init_boot_size;
 
 	memset(buf, '\0', RK_INIT_OFFSET * RK_BLK_SIZE);
-	hdr->magic       = cpu_to_le32(RK_MAGIC);
-	hdr->disable_rc4 = cpu_to_le32(!rkcommon_need_rc4_spl(params));
-	hdr->init_offset = cpu_to_le16(RK_INIT_OFFSET);
-	hdr->init_size   = cpu_to_le16(spl_params.init_size / RK_BLK_SIZE);
+	hdr->magic = RK_MAGIC;
+	hdr->disable_rc4 = !rkcommon_need_rc4_spl(params);
+	hdr->init_offset = RK_INIT_OFFSET;
+	hdr->init_size = spl_params.init_size / RK_BLK_SIZE;
 
 	/*
 	 * init_boot_size needs to be set, as it is read by the BootROM
@@ -318,10 +318,11 @@ static void rkcommon_set_header0(void *buf, struct image_tool_params *params)
 	 * for a more detailed explanation by Andy Yan
 	 */
 	if (spl_params.boot_file)
-		init_boot_size = spl_params.init_size + spl_params.boot_size;
+		hdr->init_boot_size =
+			hdr->init_size + spl_params.boot_size / RK_BLK_SIZE;
 	else
-		init_boot_size = spl_params.init_size + RK_MAX_BOOT_SIZE;
-	hdr->init_boot_size = cpu_to_le16(init_boot_size / RK_BLK_SIZE);
+		hdr->init_boot_size =
+			hdr->init_size + RK_MAX_BOOT_SIZE / RK_BLK_SIZE;
 
 	rc4_encode(buf, RK_BLK_SIZE, rc4_key);
 }
@@ -413,26 +414,24 @@ static int rkcommon_parse_header(const void *buf, struct header0_info *header0,
 	memcpy((void *)header0, buf, sizeof(struct header0_info));
 	rc4_encode((void *)header0, sizeof(struct header0_info), rc4_key);
 
-	if (le32_to_cpu(header0->magic) != RK_MAGIC)
+	if (header0->magic != RK_MAGIC)
 		return -EPROTO;
 
 	/* We don't support RC4 encoded image payloads here, yet... */
-	if (le32_to_cpu(header0->disable_rc4) == 0)
+	if (header0->disable_rc4 == 0)
 		return -ENOSYS;
 
-	hdr1_offset = le16_to_cpu(header0->init_offset) * RK_BLK_SIZE;
+	hdr1_offset = header0->init_offset * RK_BLK_SIZE;
 	hdr1_sdmmc = (struct header1_info *)(buf + hdr1_offset);
 	hdr1_spi = (struct header1_info *)(buf +
 					   rkcommon_offset_to_spi(hdr1_offset));
 
 	for (i = 0; i < ARRAY_SIZE(spl_infos); i++) {
-		if (!memcmp(&hdr1_sdmmc->magic, spl_infos[i].spl_hdr,
-			    RK_SPL_HDR_SIZE)) {
+		if (!memcmp(&hdr1_sdmmc->magic, spl_infos[i].spl_hdr, 4)) {
 			if (spl_info)
 				*spl_info = &spl_infos[i];
 			return IH_TYPE_RKSD;
-		} else if (!memcmp(&hdr1_spi->magic, spl_infos[i].spl_hdr,
-				   RK_SPL_HDR_SIZE)) {
+		} else if (!memcmp(&hdr1_spi->magic, spl_infos[i].spl_hdr, 4)) {
 			if (spl_info)
 				*spl_info = &spl_infos[i];
 			return IH_TYPE_RKSPI;
@@ -548,8 +547,8 @@ void rkcommon_print_header(const void *buf)
 		boot_size = header0.init_boot_size * RK_BLK_SIZE - init_size;
 	}
 	printf("Image Type:   Rockchip %s (%s) boot image\n",
-	       spl_info->spl_hdr,
-	       (image_type == IH_TYPE_RKSD) ? "SD/MMC" : "SPI");
+		       spl_info->spl_hdr,
+		       (image_type == IH_TYPE_RKSD) ? "SD/MMC" : "SPI");
 	printf("Init Data Size: %d bytes\n", init_size);
 
 	if (boot_size != RK_MAX_BOOT_SIZE)
