@@ -11,6 +11,7 @@
 #include <dt-bindings/interrupt-controller/apple-aic.h>
 #include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/pinctrl/apple.h>
+#include <dt-bindings/gpio/gpio.h>
 
 / {
 	compatible = "apple,t8103", "apple,arm-platform";
@@ -155,8 +156,8 @@
 			pinctrl-names = "default";
 			#address-cells = <0x1>;
 			#size-cells = <0x0>;
-			power-domains = <&ps_i2c2>;
 			status = "disabled"; /* not used in all devices */
+			power-domains = <&ps_i2c2>;
 		};
 
 		i2c3: i2c@23501c000 {
@@ -187,17 +188,17 @@
 		};
 
 		spi3: spi@23510c000 {
-			compatible = "apple,t8103-spi", "apple,spi";
+			compatible = "apple,t6000-spi", "apple,spi";
 			reg = <0x2 0x3510c000 0x0 0x4000>;
-			#address-cells = <1>;
-			#size-cells = <0>;
-			clocks = <&clk_120m>;
 			interrupt-parent = <&aic>;
 			interrupts = <AIC_IRQ 617 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&clk_120m>;
 			pinctrl-0 = <&spi3_pins>;
 			pinctrl-names = "default";
 			power-domains = <&ps_spi3>;
-			status = "disabled";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled"; /* only used in J293/J313 */
 		};
 
 		serial0: serial@235200000 {
@@ -453,6 +454,7 @@
 			reg = <0x3 0x82280000 0x0 0x100000>;
 			interrupt-parent = <&aic>;
 			interrupts = <AIC_IRQ 777 IRQ_TYPE_LEVEL_HIGH>;
+			dr_mode = "otg";
 			usb-role-switch;
 			role-switch-default-mode = "host";
 			iommus = <&dwc3_0_dart_0 0>, <&dwc3_0_dart_1 1>;
@@ -482,6 +484,7 @@
 			reg = <0x5 0x02280000 0x0 0x100000>;
 			interrupt-parent = <&aic>;
 			interrupts = <AIC_IRQ 857 IRQ_TYPE_LEVEL_HIGH>;
+			dr_mode = "otg";
 			usb-role-switch;
 			role-switch-default-mode = "host";
 			iommus = <&dwc3_1_dart_0 0>, <&dwc3_1_dart_1 1>;
@@ -573,7 +576,6 @@
 				device_type = "pci";
 				reg = <0x0 0x0 0x0 0x0 0x0>;
 				reset-gpios = <&pinctrl_ap 152 GPIO_ACTIVE_LOW>;
-				max-link-speed = <2>;
 
 				#address-cells = <3>;
 				#size-cells = <2>;
@@ -593,7 +595,6 @@
 				device_type = "pci";
 				reg = <0x800 0x0 0x0 0x0 0x0>;
 				reset-gpios = <&pinctrl_ap 153 GPIO_ACTIVE_LOW>;
-				max-link-speed = <2>;
 
 				#address-cells = <3>;
 				#size-cells = <2>;
@@ -613,7 +614,6 @@
 				device_type = "pci";
 				reg = <0x1000 0x0 0x0 0x0 0x0>;
 				reset-gpios = <&pinctrl_ap 33 GPIO_ACTIVE_LOW>;
-				max-link-speed = <1>;
 
 				#address-cells = <3>;
 				#size-cells = <2>;
@@ -627,6 +627,71 @@
 						<0 0 0 2 &port02 0 0 0 1>,
 						<0 0 0 3 &port02 0 0 0 2>,
 						<0 0 0 4 &port02 0 0 0 3>;
+			};
+		};
+
+		dart_sio: iommu@235004000 {
+			compatible = "apple,t8103-dart", "apple,dart";
+			reg = <0x2 0x35004000 0x0 0x4000>;
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 635 IRQ_TYPE_LEVEL_HIGH>;
+			#iommu-cells = <1>;
+			power-domains = <&ps_sio_cpu>;
+		};
+
+		nco_inp: clock-ref {
+			compatible = "fixed-factor-clock";
+			clocks = <&clkref>;
+			#clock-cells = <0>;
+			clock-mult = <75>;
+			clock-div = <2>; // 24 MHz * (75/2) = 900 MHz
+			clock-output-names = "nco_inp";
+		};
+
+		nco: nco@23b044000 {
+			compatible = "apple,t8103-nco", "apple,nco";
+			reg = <0x2 0x3b044000 0x0 0x14000>;
+			clocks = <&nco_inp>;
+			#clock-cells = <1>;
+			apple,nchannels = <5>;
+		};
+
+		admac: dma-controller@238200000 {
+			compatible = "apple,t8103-admac", "apple,admac";
+			reg = <0x2 0x38200000 0x0 0x34000>;
+			dma-channels = <12>;
+			interrupt-parent = <&aic>;
+			interrupts = <AIC_IRQ 626 IRQ_TYPE_LEVEL_HIGH>;
+			#dma-cells = <1>;
+			iommus = <&dart_sio 2>;
+			power-domains = <&ps_sio_adma>;
+		};
+
+		mca: mca {
+			compatible = "apple,t8103-mca", "apple,mca";
+			reg = <0x2 0x38400000 0x0 0x18000>,
+				<0x2 0x38300000 0x0 0x30000>;
+			reg-names = "clusters", "switch";
+			clocks = <&nco 0>, <&nco 1>, <&nco 2>, <&nco 3>;
+			power-domains = <&ps_mca0>; //, <&ps_mca1>, <&ps_mca2>, <&ps_mca3>, <&ps_mca4>, <&ps_mca5>;
+			resets = <&ps_mca0>, <&ps_mca1>, <&ps_mca2>, <&ps_mca3>, <&ps_mca4>, <&ps_mca5>;
+
+			#sound-dai-cells = <1>;
+			apple,nclusters = <6>;
+			apple,mclk-range = <2600000 25000000>;
+
+			route {
+				dmas = <&admac 2>;
+				dma-names = "tx";
+				apple,serdes = <1>;
+				sound-dai = <&mca 0>;
+			};
+
+			route2 {
+				dmas = <&admac 6>;
+				dma-names = "tx";
+				apple,serdes = <3>;
+				sound-dai = <&mca 2>;
 			};
 		};
 	};
